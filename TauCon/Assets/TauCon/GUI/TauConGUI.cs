@@ -82,7 +82,7 @@ namespace TauConsole
             // Set the version text (the text at the top of the console)
             // By default this will pull the Application Version from:
             // Edit > Project Settings > Player > Version, under Mac App Store Settings (it is a shared value)
-            versionText.text = "TAUCON // v" + Application.version;
+            versionText.text = "TauCon // v" + Application.version;
 
             // Rebuild the UI to reflect caret/selection color changes
             RebuildOutputUI(outputContent, outputViewport, scrollbar, inputField);
