@@ -36,6 +36,11 @@ namespace TauConsole
                     + " for a description of a certain command.\narg1 | -d | Show list of commands with description.";
             }
 
+            if (param == "me")
+            {
+                return TauCon.Colorify("No.", TauCon.exceptionColor);
+            }
+
             if (param == "list -d" || param == "list [-d]")
             {
                 return GetHelpList(true);
@@ -48,7 +53,6 @@ namespace TauConsole
             {
                 TauConCommand command = TauCon.Commands[param];
                 return TauCon.Colorify(param, TauCon.paramColor) + " "
-                    + command.description + "\n"
                     + (command.helpText == null ? string.Empty : (TauCon.Colorify(command.helpText, TauCon.helpColor)));
             }
             else if (!TauCon.Commands.ContainsKey(param))
