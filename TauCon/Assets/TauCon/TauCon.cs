@@ -275,7 +275,7 @@ namespace TauConsole
         /// Removes a command from the Commands Dictionary.
         /// </summary>
         /// <param name="command">The command to remove from the Commands Dictionary.</param>
-        /// <returns>Return true or false based on if the Commands list contains the given command argument.</returns>
+        /// <returns>True/False if Commands contains given command.</returns>
         public bool RemoveCommand(string command)
         {
             if (Commands.ContainsKey(command))
@@ -294,8 +294,8 @@ namespace TauConsole
         /// <param name="description">A short description of the command.</param>
         /// <param name="method">The method to call when the command is invoked.</param>
         /// <param name="helpText">The help text for the command.</param>
-        /// <returns></returns>
-        public static bool AddCommand(string name, string command, string description, Func<string, string> method, string helpText = null)
+        /// <returns>True/False if command is added successfully.</returns>
+        public static bool AddCommand(string name, string command, string description, Func<string, string> method, string helpText = "No help text.")
         {
             if (string.IsNullOrEmpty(command))
             {
@@ -504,16 +504,11 @@ namespace TauConsole
         /// </summary>
         private void InitDefaultCommands()
         {
-            AddCommand("Help", "help", "Show help on how to use the console.", CommandHelp.GetHelp);
-            AddCommand("Quit", "quit", "Quits the application immediately.", CommandQuit.QuitApplication);
+            AddCommand("Help", "help", "Show help on how to use the console.", CommandHelp.GetHelp, "[arg1] | string (cmd) | Show help text for given command.");
+            AddCommand("Quit", "quit", "Quits the application immediately.", CommandQuit.QuitApplication, TauCon.Colorify("...", TauCon.exceptionColor));
             AddCommand("Clear", "clear", "Clears the output log of all text.", CommandClear.ClearLog);
-            AddCommand("Volume", "volume", "Change volume, value between 0 and 1",
-                CommandVolume.ChangeVolume, "Usage: { "
-                + Colorify("volume [value between 0 and 1]", paramColor)
-                + " } \nExample: " + Colorify("volume 0.5", paramColor)
-                + " sets the volume to 50%\nHint: Input { "
-                + Colorify("volume", paramColor)
-                + " } to output the current volume value.");
+            AddCommand("Volume", "volume", "Set volume value to a float ranging from 0 to 1.",
+                CommandVolume.ChangeVolume, "[arg1] | float (0-1) | Set volume value.");
         }
 
         #endregion
@@ -526,9 +521,6 @@ namespace TauConsole
         /// <param name="dir">KeyCode</param>
         private void FetchHistory(KeyCode dir)
         {
-            Debug.Log("before: " + currentIndex);
-            //Debug.Log(History.ElementAt(currentIndex+1));
-            //Debug.Log(History.ToString());
             switch(dir)
             {
                 case KeyCode.UpArrow:
@@ -565,7 +557,6 @@ namespace TauConsole
                         break;
                     }
             }
-            Debug.Log("after: " + currentIndex);
         } 
 
         #endregion
