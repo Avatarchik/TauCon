@@ -386,7 +386,7 @@ namespace TauConsole
                 output += "\n";
             }
 
-            currentIndex = 0;
+            currentIndex = -1;
             // Return the output (print to the output log)
             return Print(output);
         }
@@ -550,37 +550,33 @@ namespace TauConsole
         /// <param name="dir">KeyCode</param>
         private void FetchHistory(KeyCode dir)
         {
-            if (dir == KeyCode.UpArrow || dir == KeyCode.DownArrow)
-            {
-                if (currentIndex == null)
-                {
-                    return;
-                }
-            }
-
-            Debug.Log(currentIndex);
-            Debug.Log(History[currentIndex]);
+            Debug.Log("before: " + currentIndex);
+            //Debug.Log(History.ElementAt(currentIndex+1));
+            //Debug.Log(History.ToString());
             switch(dir)
             {
                 case KeyCode.UpArrow:
-                    if (currentIndex == History.Count - 1)
+                    if (currentIndex < 0)
                     {
-                        Debug.Log("Adding one would go out of range, preventing...");
+                        currentIndex += 1;
+                        inputField.text = History[currentIndex];
+                        break;
+                    }
+                    else if (currentIndex == History.Count - 1)
+                    {
                         inputField.text = History[History.Count - 1];
                         break;
                     }
                     else
                     {
-                        inputField.text = History[currentIndex];
                         currentIndex += 1;
+                        inputField.text = History.ElementAt(currentIndex);
                         break;
                     }
-
                 case KeyCode.DownArrow:
-                    if ((currentIndex - 1) < 0)
+                    if (currentIndex <= 0)
                     {
-                        Debug.Log("Subtracting one would go out of range, preventing...");
-                        currentIndex = 0;
+                        currentIndex = -1;
                         inputField.text = "";
                         //StartCoroutine(CaretToBeginning(inputField));
                         break;
@@ -588,11 +584,12 @@ namespace TauConsole
                     else
                     {
                         currentIndex -= 1;
-                        inputField.text = History[currentIndex];
+                        inputField.text = History.ElementAt(currentIndex);
                         //StartCoroutine(CaretToBeginning(inputField));
                         break;
                     }
             }
+            Debug.Log("after: " + currentIndex);
         } 
 
         #endregion
