@@ -340,6 +340,8 @@ namespace TauConsole
                 return Print(output);
             }
 
+            command.ToLower();
+
             string[] parsedCmd = command.Split(' ');
 
             // Raw command without args
@@ -416,7 +418,8 @@ namespace TauConsole
         }
 
         /// <summary>
-        /// Activates the given input field and moves the caret to the end.
+        /// Moves caret to given pos
+        /// This sets the colors to transparent for 1 frame to overcome a quirk in Unity's UI.
         /// </summary>
         /// <param name="inputField">The input field used.</param>
         /// <returns>null</returns>
@@ -434,27 +437,6 @@ namespace TauConsole
             // Reset selection color to initial color
             inputField.selectionColor = initialInputSelectionColor;
             inputField.caretColor = initialCaretColor;
-
-            inputField.Rebuild(CanvasUpdate.PreRender);
-        }
-
-        /// <summary>
-        /// Activates the given input field and moves the caret to the beginning.
-        /// This sets the colors to transparent temporarily to overcome a quirk in Unity's UI.
-        /// </summary>
-        /// <param name="inputField">The input field used.</param>
-        /// <returns>null</returns>
-        public static IEnumerator CaretToBeginning(InputField inputField)
-        {
-            inputField.Select();
-            inputField.selectionColor = new Color32(0, 0, 0, 0);
-            inputField.caretColor = new Color32(0, 0, 0, 0);
-            // Wait for 1 frame
-            yield return null;
-            inputField.caretPosition = 0;
-            inputField.selectionColor = initialInputSelectionColor;
-            inputField.caretColor = initialCaretColor;
-
             inputField.Rebuild(CanvasUpdate.PreRender);
         }
 
@@ -477,10 +459,7 @@ namespace TauConsole
 
         private static string SendOutputToListeners(string output)
         {
-            if (OnOutput != null)
-            {
-                OnOutput(output);
-            }
+            if (OnOutput != null) { OnOutput(output); }
             return output;
         }
 
@@ -526,18 +505,15 @@ namespace TauConsole
         private void InitDefaultCommands()
         {
             AddCommand("Help", "help", "Show help on how to use the console.", CommandHelp.GetHelp);
-
-            AddCommand("Volume", "volume", "Change volume, value between 0 and 1", 
-                CommandVolume.ChangeVolume, "Usage: { " 
-                + Colorify("volume [value between 0 and 1]", paramColor) 
-                + " } \nExample: " + Colorify("volume 0.5", paramColor) 
-                + " sets the volume to 50%\nHint: Input { " 
-                + Colorify("volume", paramColor) 
-                + " } to output the current volume value.");
-
             AddCommand("Quit", "quit", "Quits the application immediately.", CommandQuit.QuitApplication);
-
             AddCommand("Clear", "clear", "Clears the output log of all text.", CommandClear.ClearLog);
+            AddCommand("Volume", "volume", "Change volume, value between 0 and 1",
+                CommandVolume.ChangeVolume, "Usage: { "
+                + Colorify("volume [value between 0 and 1]", paramColor)
+                + " } \nExample: " + Colorify("volume 0.5", paramColor)
+                + " sets the volume to 50%\nHint: Input { "
+                + Colorify("volume", paramColor)
+                + " } to output the current volume value.");
         }
 
         #endregion
@@ -578,14 +554,14 @@ namespace TauConsole
                     {
                         currentIndex = -1;
                         inputField.text = "";
-                        //StartCoroutine(CaretToBeginning(inputField));
+                        StartCoroutine(CaretToEnd(inputField));
                         break;
                     }
                     else
                     {
                         currentIndex -= 1;
                         inputField.text = History.ElementAt(currentIndex);
-                        //StartCoroutine(CaretToBeginning(inputField));
+                        StartCoroutine(CaretToEnd(inputField));
                         break;
                     }
             }
