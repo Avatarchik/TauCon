@@ -69,7 +69,8 @@ namespace TauConsole
 
         public static TauCon Instance;
         public static Dictionary<string, TauConCommand> Commands = new Dictionary<string, TauConCommand>();
-        public static List<string> History = new List<string>();
+        public static List<string> CommandHistory = new List<string>();
+        public static List<string> LogHistory = new List<string>();
         public delegate void ConsoleListener(string line);
         public static event ConsoleListener OnOutput;
 
@@ -351,16 +352,16 @@ namespace TauConsole
             string trimmedCmd = string.Join(" ", parsedCmd).Trim();
 
             // Check to see if our History array does NOT contain the evaluated cmd
-            if (!History.Contains(trimmedCmd))
+            if (!CommandHistory.Contains(trimmedCmd))
             {
                 // If it does not contain it, prepend it
-                History.Insert(0, trimmedCmd);
+                CommandHistory.Insert(0, trimmedCmd);
             }
             else
             {
                 // If it does contain it, remove it from the array and prepend it
-                History.Remove(trimmedCmd);
-                History.Insert(0, trimmedCmd);
+                CommandHistory.Remove(trimmedCmd);
+                CommandHistory.Insert(0, trimmedCmd);
             }
 
             // DEV NOTE:
@@ -388,7 +389,9 @@ namespace TauConsole
                 output += "\n";
             }
 
+            // Reset currentIndex
             currentIndex = -1;
+
             // Return the output (print to the output log)
             return Print(output);
         }
@@ -455,11 +458,22 @@ namespace TauConsole
 
         #endregion
 
-        #region Printing & Output to Listeners
+        #region Printing & Output
+
+        //public static string OutputToLog(string output)
+        //{
+
+        //}
 
         private static string SendOutputToListeners(string output)
         {
-            if (OnOutput != null) { OnOutput(output); }
+            if (OnOutput != null)
+            {
+                // Push last output to LogHistory
+                LogHistory.Insert(0, output);
+                Debug.Log(string.Join(", ", LogHistory.ToArray()));
+                OnOutput(output);
+            }
             return output;
         }
 
@@ -530,18 +544,18 @@ namespace TauConsole
                     if (currentIndex < 0)
                     {
                         currentIndex += 1;
-                        inputField.text = History[currentIndex];
+                        inputField.text = CommandHistory[currentIndex];
                         break;
                     }
-                    else if (currentIndex == History.Count - 1)
+                    else if (currentIndex == CommandHistory.Count - 1)
                     {
-                        inputField.text = History[History.Count - 1];
+                        inputField.text = CommandHistory[CommandHistory.Count - 1];
                         break;
                     }
                     else
                     {
                         currentIndex += 1;
-                        inputField.text = History.ElementAt(currentIndex);
+                        inputField.text = CommandHistory.ElementAt(currentIndex);
                         break;
                     }
                 case KeyCode.DownArrow:
@@ -555,7 +569,7 @@ namespace TauConsole
                     else
                     {
                         currentIndex -= 1;
-                        inputField.text = History.ElementAt(currentIndex);
+                        inputField.text = CommandHistory.ElementAt(currentIndex);
                         StartCoroutine(CaretToEnd(inputField));
                         break;
                     }
