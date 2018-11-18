@@ -505,8 +505,11 @@ namespace TauConsole
         private void InitDefaultCommands()
         {
             AddCommand("Help", "help", "Show help on how to use the console.", CommandHelp.GetHelp, "[arg1] | string (cmd) | Show help text for given command.");
-            AddCommand("Quit", "quit", "Quits the application immediately.", CommandQuit.QuitApplication, "noargs");
+
+            AddCommand("Quit", "quit", "Quits the application.", CommandQuit.QuitApplication, "noargs");
+
             AddCommand("Clear", "clear", "Clears the output log of all text.", CommandClear.ClearLog, "noargs");
+
             AddCommand("Volume", "volume", "Set volume value to a float ranging from 0 to 1.",
                 CommandVolume.ChangeVolume, "[arg1] | float (0-1) | Set volume value.");
         }
