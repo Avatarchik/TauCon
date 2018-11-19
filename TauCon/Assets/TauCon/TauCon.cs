@@ -16,30 +16,60 @@ namespace TauConsole
     public class TauCon : MonoBehaviour
     {
 
+        #region User Variables
         [Header("UI Components")]
         public Canvas tauConCanvas;
         public GameObject versionPanel;
         public Text versionText;
         public GameObject outputPanel;
         public ScrollRect outputLogScrollRect;
+        public RectTransform outputViewport;
+        public RectTransform outputContent;
         public Text outputLogText;
         public InputField inputField;
         public Text inputText;
         public Text inputPlaceholderText;
         public Scrollbar scrollbar;
         public RectTransform scrollbarHandle;
-        public static Text _outputLogText;
 
         [Header("Console Options")]
-        public char commandSymbol = '$';
-        public int maxOutputLength = 1500;
+        public char commandSymbol = '>';
+        public int maxOutputLength = 5000;
         public bool clearOnSubmit = true;
         public bool reselectOnSubmit = false;
         public bool outputUnityLog = false;
         public bool outputStackTrace = false;
         public bool allowEmptyOutput = false;
         public bool newlineOnOutput = true;
-        public int characterLimit = 65;
+        public int characterLimit = 60;
+        public float caretBlinkRate = 1.5f;
+        public int caretWidth = 10;
+        public bool caretCustomColor = true;
+        public string consoleVersionText = "TauCon//";
+
+        [Header("Fonts")]
+        public Font versionFont;
+        public Font outputFont;
+        public Font inputFont;
+        public Font placeholderFont;
+
+        [Header("Font Sizes")]
+        public int versionFontSize;
+        public int outputFontSize;
+        public int inputFontSize;
+        public int placeholderFontSize;
+
+        [Header("GUI Colors")]
+        public Color32 versionPanelBackgroundRGBA = new Color32(46, 46, 46, 255);
+        public Color32 versionTextRGBA = new Color32(131, 212, 179, 255);
+        public Color32 outputPanelBackgroundRGBA = new Color32(58, 58, 58, 255);
+        public Color32 inputFieldBackgroundRGBA = new Color32(73, 73, 73, 255);
+        public Color32 inputTextRGBA = new Color32(188, 186, 184, 255);
+        public Color32 inputPlaceholderTextRGBA = new Color32(164, 164, 164, 255);
+        public Color32 inputCaretColorRGBA = new Color32(131, 212, 179, 255);
+        public Color32 inputSelectionColorRGBA = new Color32(131, 212, 179, 125);
+        public Color32 scrollbarBackgroundRGBA = new Color32(85, 85, 85, 255);
+        public Color32 scrollbarHandleRGBA = new Color32(131, 212, 179, 255);
 
         [Header("Log Colors")]
         public Color32 commandColorRGBA = new Color32(131, 212, 179, 255);
@@ -51,6 +81,8 @@ namespace TauConsole
         public Color32 paramColorRGBA = new Color32(163, 222, 131, 255);
         public Color32 helpColorRGBA = new Color32(157, 229, 255, 255);
         public Color32 helpListColorRGBA = new Color32(213, 253, 255, 255);
+
+        #endregion
 
         // Vars to store hex of RGBA
         public static string commandColor;
@@ -66,13 +98,18 @@ namespace TauConsole
         private static Color32 initialInputSelectionColor;
         private static Color32 initialCaretColor;
         private static int currentIndex;
+        #pragma warning disable
+        private float outputContentHeight;
+        #pragma warning enable
+
+        private Vector2 outputContentReset = new Vector2(0f, 0f);
 
         public static TauCon Instance;
         public static Dictionary<string, TauConCommand> Commands = new Dictionary<string, TauConCommand>();
         public static List<string> CommandHistory = new List<string>();
         public static List<string> LogHistory = new List<string>();
         public delegate void ConsoleListener(string line);
-        public static event ConsoleListener OnOutput;
+        public static event ConsoleListener OnOutputEvent;
 
         /// <summary>Used to color text in the logger by wrapping text in color tags
         /// <para>string text</para>
@@ -119,8 +156,7 @@ namespace TauConsole
         /// </summary>
         private void Start()
         {
-            _outputLogText = outputLogText;
-
+            OnOutputEvent += OnOutput;
             // If Unity log output is enabled
             if (outputUnityLog)
             {
@@ -128,11 +164,16 @@ namespace TauConsole
             }
 
             // Init current index for History
-            currentIndex = 0;
+            currentIndex = -1;
 
+            InitConsoleGUI();
             InitConsoleOptions();
             InitLogColors();
+            InitDefaultLogMessages();
             InitDefaultCommands();
+
+            inputField.onEndEdit.AddListener(OnEndEdit);
+            outputContentHeight = outputContent.rect.height;
 
             // Initialize OutputLog as empty string (remove test text from Editor)
             outputLogText.text = string.Empty;
@@ -155,7 +196,6 @@ namespace TauConsole
                     // Only parse text if there is text
                     if (inputText.text != "")
                     {
-
                         // Clear the console input field
                         inputText = null;
                     }
@@ -197,47 +237,6 @@ namespace TauConsole
         private static string LOGASSERT;
         private static string LOGINVALIDCMD;
         private static string LOGCMDNOTFOUND;
-
-        /// <summary>
-        /// Set all default log messages and their colors.
-        /// </summary>
-        private static void InitDefaultLogMessages()
-        {
-            LOGINVALIDCMD = Colorify("Command invalid: ", exceptionColor);
-            LOGCMDNOTFOUND = Colorify("Command unrecognized: ", exceptionColor);
-            LOGERROR = Colorify("Error: ", errorColor);
-            LOGWARNING = Colorify("Warning: ", warningColor);
-            LOGDEFAULT = Colorify("Log: ", logColor);
-            LOGEXCEPTION = Colorify("Exception: ", exceptionColor);
-            LOGASSERT = Colorify("Assert: ", assertColor);
-        }
-
-        /// <summary>
-        /// Initialize all log colors in Hex from the given RGBA colors set by default or in the editor.
-        /// </summary>
-        private void InitLogColors()
-        {
-            commandColor = ColorUtility.ToHtmlStringRGBA(commandColorRGBA);
-            logColor = ColorUtility.ToHtmlStringRGBA(logColorRGBA);
-            assertColor = ColorUtility.ToHtmlStringRGBA(assertColorRGBA);
-            warningColor = ColorUtility.ToHtmlStringRGBA(warningColorRGBA);
-            errorColor = ColorUtility.ToHtmlStringRGBA(errorColorRGBA);
-            exceptionColor = ColorUtility.ToHtmlStringRGBA(exceptionColorRGBA);
-            paramColor = ColorUtility.ToHtmlStringRGBA(paramColorRGBA);
-            helpColor = ColorUtility.ToHtmlStringRGBA(helpColorRGBA);
-            helpListColor = ColorUtility.ToHtmlStringRGBA(helpListColorRGBA);
-        }
-
-        /// <summary>
-        /// Initialize all console options.
-        /// </summary>
-        private void InitConsoleOptions()
-        {
-
-            inputField.characterLimit = characterLimit;
-            initialInputSelectionColor = inputField.selectionColor;
-            initialCaretColor = inputField.caretColor;
-        }
 
         private void HandleUnityLog(string logString, string trace, LogType logType)
         {
@@ -443,6 +442,29 @@ namespace TauConsole
             inputField.Rebuild(CanvasUpdate.PreRender);
         }
 
+        /// <summary>
+        /// Rebuilds the output UI to account for log output (resizes the outputContentScrollRect height)
+        /// <para>RectTransform content</para>
+        /// <para>RectTransform parent</para>
+        /// <para>Scrollbar scrollbar</para>
+        /// </summary>
+        public void RebuildOutputUI(RectTransform content, RectTransform parent, Scrollbar scrollbar, InputField inputField)
+        {
+            // Rebuild content RT
+            content.GetComponent<RectTransform>().anchoredPosition = parent.position;
+            content.GetComponent<RectTransform>().sizeDelta = new Vector2(content.rect.width, outputContentHeight = outputLogText.preferredHeight);
+            content.anchorMin = outputContentReset;
+            content.anchorMax = outputContentReset;
+            content.pivot = outputContentReset;
+            content.transform.SetParent(parent);
+
+            // Rebuild scrollbar
+            scrollbar.Rebuild(CanvasUpdate.Prelayout);
+
+            // Rebuild InputField
+            inputField.Rebuild(CanvasUpdate.PreRender);
+        }
+
         #endregion
 
         #region Configuration File & Parsing
@@ -465,14 +487,71 @@ namespace TauConsole
 
         //}
 
+        /// <summary>
+        /// A method to act on the onEndEdit event for an InputField in Unity, checks for "Submit" event and calls tauConGUI.OnInput()
+        /// </summary>
+        /// <param name="line"></param>
+        private void OnEndEdit(string line)
+        {
+            if (Input.GetButtonDown("Submit"))
+            {
+                TauCon.Instance.OnInput();
+            }
+        }
+
+        /// <summary>
+        /// Called when text is to be appended to the output log.
+        /// </summary>
+        /// <param name="line">The line to append to the output log.</param>
+        private void OnOutput(string line)
+        {
+            if (outputLogText.text.Length > TauCon.Instance.maxOutputLength)
+            {
+                outputLogText.text = outputLogText.text.Substring((outputLogText.text.Length - TauCon.Instance.maxOutputLength), TauCon.Instance.maxOutputLength);
+            }
+
+            outputLogText.text += '\n' + line;
+            TauCon.Instance.RebuildOutputUI(outputContent, outputViewport, scrollbar, inputField);
+        }
+
+        public void OnInput()
+        {
+            // Get the value of the input field
+            string command = inputField.text;
+            // If there's no command, return
+            if (string.IsNullOrEmpty(command))
+            {
+                return;
+            }
+
+            // Otherwise continue...
+            // Send command to console & eval
+            TauCon.Eval(command);
+
+            // If clearOnSubmit is enabled
+            if (TauCon.Instance.clearOnSubmit)
+            {
+                // Clear the input field
+                inputField.text = string.Empty;
+            }
+            // If reselectOnSubmit is enabled
+            if (TauCon.Instance.reselectOnSubmit)
+            {
+                // Start a coroutine to place the cursor at the end of the text in the input
+                StartCoroutine(TauCon.CaretToEnd(inputField));
+            }
+            // And then rebuild the UI elements that need to be rebuilt to show changes
+            TauCon.Instance.RebuildOutputUI(outputContent, outputViewport, scrollbar, inputField);
+        }
+
         private static string SendOutputToListeners(string output)
         {
-            if (OnOutput != null)
+            if (OnOutputEvent != null)
             {
                 // Push last output to LogHistory
                 LogHistory.Insert(0, output);
                 Debug.Log(string.Join(", ", LogHistory.ToArray()));
-                OnOutput(output);
+                OnOutputEvent(output);
             }
             return output;
         }
@@ -480,6 +559,7 @@ namespace TauConsole
         /// <summary>
         /// Send text to listeners and return text.
         /// </summary>
+        /// <remarks>Overrides MonoBehaviour's Print method.</remarks>
         /// <param name="text">The string of text to send.</param>
         /// <returns>Returns either an empty string if text is empty or the text given.</returns>
         public static string Print(string text)
@@ -499,16 +579,6 @@ namespace TauConsole
             return text;
         }
 
-        /// <summary>
-        /// Overrides Monobehaviour's "print" method with <see cref="Print(string)"/> method.
-        /// </summary>
-        /// <param name="text">The text given.</param>
-        /// <returns>Returns the result of calling <see cref="Print(string)"/> with the given text.</returns>
-        public static string print(string text)
-        {
-            return Print(text);
-        }
-
         #endregion
 
         #region Built-in Console Commands
@@ -526,6 +596,79 @@ namespace TauConsole
 
             AddCommand("Volume", "volume", "Set volume value to a float ranging from 0 to 1.",
                 CommandVolume.ChangeVolume, "[arg1] | float (0-1) | Set volume value.");
+        }
+
+        #endregion
+
+        #region Initialization
+
+        /// <summary>
+        /// Set all default log messages and their colors.
+        /// </summary>
+        private static void InitDefaultLogMessages()
+        {
+            LOGINVALIDCMD = Colorify("Command invalid: ", exceptionColor);
+            LOGCMDNOTFOUND = Colorify("Command unrecognized: ", exceptionColor);
+            LOGERROR = Colorify("Error: ", errorColor);
+            LOGWARNING = Colorify("Warning: ", warningColor);
+            LOGDEFAULT = Colorify("Log: ", logColor);
+            LOGEXCEPTION = Colorify("Exception: ", exceptionColor);
+            LOGASSERT = Colorify("Assert: ", assertColor);
+        }
+
+        /// <summary>
+        /// Initialize all log colors in Hex from the given RGBA colors set by default or in the editor.
+        /// </summary>
+        private void InitLogColors()
+        {
+            commandColor = ColorUtility.ToHtmlStringRGBA(commandColorRGBA);
+            logColor = ColorUtility.ToHtmlStringRGBA(logColorRGBA);
+            assertColor = ColorUtility.ToHtmlStringRGBA(assertColorRGBA);
+            warningColor = ColorUtility.ToHtmlStringRGBA(warningColorRGBA);
+            errorColor = ColorUtility.ToHtmlStringRGBA(errorColorRGBA);
+            exceptionColor = ColorUtility.ToHtmlStringRGBA(exceptionColorRGBA);
+            paramColor = ColorUtility.ToHtmlStringRGBA(paramColorRGBA);
+            helpColor = ColorUtility.ToHtmlStringRGBA(helpColorRGBA);
+            helpListColor = ColorUtility.ToHtmlStringRGBA(helpListColorRGBA);
+        }
+
+        /// <summary>
+        /// Initialize all console options.
+        /// </summary>
+        private void InitConsoleOptions()
+        {
+
+            inputField.characterLimit = characterLimit;
+            initialInputSelectionColor = inputField.selectionColor;
+            initialCaretColor = inputField.caretColor;
+            // Set the version text (the text at the top of the console)
+            // By default this will pull the Application Version from:
+            // Edit > Project Settings > Player > Version, under Mac App Store Settings (it is a shared value)
+            versionText.text = consoleVersionText;
+        }
+
+        /// <summary>
+        /// Sets all GUI image color values and settings.
+        /// </summary>
+        private void InitConsoleGUI()
+        {
+            // Colors
+            versionPanel.GetComponent<Image>().color = versionPanelBackgroundRGBA;
+            versionText.color = versionTextRGBA;
+            outputPanel.GetComponent<Image>().color = outputPanelBackgroundRGBA;
+            outputLogScrollRect.GetComponent<Image>().color = outputPanelBackgroundRGBA;
+            inputField.GetComponent<Image>().color = inputFieldBackgroundRGBA;
+            inputText.color = inputTextRGBA;
+            inputPlaceholderText.color = inputPlaceholderTextRGBA;
+            inputField.selectionColor = inputSelectionColorRGBA;
+            inputField.caretColor = inputCaretColorRGBA;
+            scrollbar.GetComponent<Image>().color = scrollbarBackgroundRGBA;
+            scrollbarHandle.GetComponent<Image>().color = scrollbarHandleRGBA;
+
+            // Options
+            inputField.caretBlinkRate = caretBlinkRate;
+            inputField.caretWidth = caretWidth;
+            inputField.customCaretColor = caretCustomColor;
         }
 
         #endregion
