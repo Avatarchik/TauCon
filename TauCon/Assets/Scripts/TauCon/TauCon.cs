@@ -17,6 +17,7 @@ namespace TauConsole
     {
 
         #region User Variables
+
         [Header("UI Components")]
         public Canvas tauConCanvas;
         public GameObject versionPanel;
@@ -41,10 +42,10 @@ namespace TauConsole
         public bool outputStackTrace = false;
         public bool allowEmptyOutput = false;
         public bool newlineOnOutput = true;
+        public bool caretCustomColor = true;
         public int characterLimit = 60;
         public float caretBlinkRate = 1.5f;
         public int caretWidth = 10;
-        public bool caretCustomColor = true;
         public string consoleVersionText = "TauCon//";
 
         [Header("Fonts")]
@@ -330,8 +331,8 @@ namespace TauConsole
 
             string output = string.Empty;
 
-            // Print command
-            Print(Instance.commandSymbol + " " + Colorify(command, commandColor));
+            //// Print command
+            //Print(Instance.commandSymbol + " " + Colorify(command, commandColor));
 
             if (string.IsNullOrEmpty(command))
             {
@@ -390,6 +391,11 @@ namespace TauConsole
 
             // Reset currentIndex
             currentIndex = -1;
+
+            // TODO(Trevor Woodman): REMOVE Debug
+            // Push log to LogHistory
+            LogHistory.Insert(0, command);
+            Debug.Log(string.Join(", ", LogHistory.ToArray()));
 
             // Return the output (print to the output log)
             return Print(output);
@@ -524,6 +530,11 @@ namespace TauConsole
                 return;
             }
 
+            // TODO(Trevor Woodman): REMOVE Debug
+            //// Push last input to LogHistory
+            //LogHistory.Insert(0, command);
+            //Debug.Log(string.Join(", ", LogHistory.ToArray()));
+
             // Otherwise continue...
             // Send command to console & eval
             TauCon.Eval(command);
@@ -548,9 +559,6 @@ namespace TauConsole
         {
             if (OnOutputEvent != null)
             {
-                // Push last output to LogHistory
-                LogHistory.Insert(0, output);
-                Debug.Log(string.Join(", ", LogHistory.ToArray()));
                 OnOutputEvent(output);
             }
             return output;
