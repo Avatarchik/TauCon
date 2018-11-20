@@ -84,7 +84,7 @@ namespace TauConsole
             {
                 string result = string.Empty;
 
-                // TODO: Rewrite this foreach loop as a for loop (faster)
+                // TODO(Trevor Woodman): Rewrite this foreach loop as a for loop (faster)
                 foreach (string command in TauCon.Commands.Keys)
                 {
                     result += TauCon.Colorify(command, TauCon.helpColor) 

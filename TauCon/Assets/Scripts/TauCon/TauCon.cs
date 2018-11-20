@@ -475,7 +475,7 @@ namespace TauConsole
 
         #region Configuration File & Parsing
 
-        // TODO: Write this parse config method at a later date
+        // TODO(Trevor Woodman): Write this parse config method at a later date
         /// <summary>
         /// Parse the console.cfg file 
         /// </summary>

@@ -16,7 +16,7 @@ namespace TauConsole
         // Then set this to the Axes name value
         // Default "Console"
         public string toggleCommand = "Console";
-        // TODO: Get the value of Input button "Console" positive button and pass it here...might not be possible with default InputManager in Unity
+        // TODO(Trevor Woodman): Get the value of Input button "Console" positive button and pass it here...might not be possible with default InputManager in Unity
 
         private GameObject tauCon;
         private InputField inputField;
