@@ -112,22 +112,6 @@ namespace TauConsole
         public delegate void ConsoleListener(string line);
         public static event ConsoleListener OnOutputEvent;
 
-        /// <summary>Used to color text in the logger by wrapping text in color tags
-        /// <para>string text</para>
-        /// <para>[string color(hex) = null]</para>
-        /// </summary>
-        public static string Colorify(string text, string color = null)
-        {
-            if (color == null)
-            {
-                return "<color=#" + logColor + ">" + text + "</color>";
-            }
-            else
-            {
-                return "<color=#" + color + ">" + text + "</color>";
-            }
-        }
-
         static TauCon() { }
 
         #region Unity Callbacks
@@ -404,6 +388,22 @@ namespace TauConsole
         #endregion
 
         #region Utility Methods
+
+        /// <summary>Used to color text in the logger by wrapping text in color tags
+        /// <para>string text</para>
+        /// <para>[string color(hex) = null]</para>
+        /// </summary>
+        public static string Colorify(string text, string color = null)
+        {
+            if (color == null)
+            {
+                return "<color=#" + logColor + ">" + text + "</color>";
+            }
+            else
+            {
+                return "<color=#" + color + ">" + text + "</color>";
+            }
+        }
 
         /// <summary>
         /// Extract the command and any parameters given.
