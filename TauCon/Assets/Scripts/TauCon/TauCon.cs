@@ -162,10 +162,6 @@ namespace TauConsole
 
             // Initialize OutputLog as empty string (remove test text from Editor)
             outputLogText.text = string.Empty;
-            Debug.Log("Output has been cleared.");
-
-            // Initialize console as inactive
-            tauConCanvas.gameObject.SetActive(false);
         }
 
         /// <summary>
