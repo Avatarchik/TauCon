@@ -173,6 +173,13 @@ namespace TauConsole
         /// </summary>
         private void Update()
         {
+            if (Input.GetKeyDown(KeyCode.X))
+            {
+                LogHistory.RemoveAt(0);
+                Debug.Log(string.Join(", ", LogHistory.ToArray()));
+                // And then rebuild the UI elements that need to be rebuilt to show changes
+                RebuildOutputUI(outputContent, outputViewport, scrollbar, inputField);
+            }
             // Check for active console and 'return' event for command input
             if (tauConCanvas.gameObject.activeInHierarchy)
             {
@@ -376,11 +383,6 @@ namespace TauConsole
             // Reset currentIndex
             currentIndex = -1;
 
-            // TODO(Trevor Woodman): REMOVE Debug
-            // Push log to LogHistory
-            LogHistory.Insert(0, command);
-            Debug.Log(string.Join(", ", LogHistory.ToArray()));
-
             // Return the output (print to the output log)
             return Print(output);
         }
@@ -501,7 +503,7 @@ namespace TauConsole
         {
             if (Input.GetButtonDown("Submit"))
             {
-                TauCon.Instance.OnInput();
+                OnInput();
             }
         }
 
@@ -511,16 +513,21 @@ namespace TauConsole
         /// <param name="line">The line to append to the output log.</param>
         private void OnOutput(string line)
         {
-            if (outputLogText.text.Length > TauCon.Instance.maxOutputLength)
+            if (outputLogText.text.Length > maxOutputLength)
             {
-                outputLogText.text = outputLogText.text.Substring((outputLogText.text.Length - TauCon.Instance.maxOutputLength), TauCon.Instance.maxOutputLength);
+                outputLogText.text = outputLogText.text.Substring((outputLogText.text.Length - maxOutputLength), maxOutputLength);
             }
 
+            // TODO(Trevor Woodman): REMOVE Debug
+            // Push log to LogHistory
+            LogHistory.Insert(0, line);
+            Debug.Log(string.Join(", ", LogHistory.ToArray()));
+
             outputLogText.text += '\n' + line;
-            TauCon.Instance.RebuildOutputUI(outputContent, outputViewport, scrollbar, inputField);
+            RebuildOutputUI(outputContent, outputViewport, scrollbar, inputField);
         }
 
-        public void OnInput()
+        private void OnInput()
         {
             // Get the value of the input field
             string command = inputField.text;
@@ -531,28 +538,28 @@ namespace TauConsole
             }
 
             // TODO(Trevor Woodman): REMOVE Debug
-            //// Push last input to LogHistory
-            //LogHistory.Insert(0, command);
-            //Debug.Log(string.Join(", ", LogHistory.ToArray()));
+            // Push log to LogHistory
+            LogHistory.Insert(0, command);
+            Debug.Log(string.Join(", ", LogHistory.ToArray()));
 
             // Otherwise continue...
             // Send command to console & eval
-            TauCon.Eval(command);
+            Eval(command);
 
             // If clearOnSubmit is enabled
-            if (TauCon.Instance.clearOnSubmit)
+            if (clearOnSubmit)
             {
                 // Clear the input field
                 inputField.text = string.Empty;
             }
             // If reselectOnSubmit is enabled
-            if (TauCon.Instance.reselectOnSubmit)
+            if (reselectOnSubmit)
             {
                 // Start a coroutine to place the cursor at the end of the text in the input
-                StartCoroutine(TauCon.CaretToEnd(inputField));
+                StartCoroutine(CaretToEnd(inputField));
             }
             // And then rebuild the UI elements that need to be rebuilt to show changes
-            TauCon.Instance.RebuildOutputUI(outputContent, outputViewport, scrollbar, inputField);
+            RebuildOutputUI(outputContent, outputViewport, scrollbar, inputField);
         }
 
         private static string SendOutputToListeners(string output)
